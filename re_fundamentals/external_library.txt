@@ -1,2 +1,1 @@
-#!/bin/bash
-readelf -d target_binary
+lib_custom_hbtn.so

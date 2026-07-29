@@ -1,27 +1,33 @@
 #!/bin/bash
 
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <ELF_file>"
-    exit 1
+# Check if file arguments are provided
+if [ -z "$1" ]; then
+  echo "Usage: $0 <ELF file>"
+  exit 1
 fi
 
 file_name="$1"
 
+# Check if the file exists
 if [ ! -f "$file_name" ]; then
-    echo "Error: File '$file_name' does not exist."
-    exit 1
+  echo "File not found: $file_name"
+  exit 1
 fi
 
-if ! readelf -h "$file_name" >/dev/null 2>&1; then
-    echo "Error: '$file_name' is not a valid ELF file."
-    exit 1
+# Check if the file is an ELF file
+if ! file "$file_name" | grep -q "ELF"; then
+  echo "Not an ELF file: $file_name"
+  exit 1
 fi
 
-source messages.sh
+# Extract the ELF header information
+# Extract ELF header information
+magic_number=$(readelf -h "$file_name" | grep "Magic:" | awk '{for(i=2; i<=NF; i++) printf "%s ", $i; print ""}' | sed 's/ $//')
+class=$(readelf -h "$file_name" | grep "Class:" | awk '{print $2, $3}' | sed 's/ $//')
+byte_order=$(readelf -h "$file_name" | grep "Data:" | awk '{print $4, $5}')
+entry_point_address=$(readelf -h "$file_name" | grep "Entry point address:" | awk '{print $4}')
 
-magic_number=$(readelf -h "$file_name" | awk -F: '/Magic:/ {gsub(/^[ \t]+/, "", $2); print $2}')
-class=$(readelf -h "$file_name" | awk -F: '/Class:/ {gsub(/^[ \t]+/, "", $2); print $2}')
-byte_order=$(readelf -h "$file_name" | awk -F: '/Data:/ {gsub(/^[ \t]+/, "", $2); print $2}')
-entry_point_address=$(readelf -h "$file_name" | awk -F: '/Entry point address:/ {gsub(/^[ \t]+/, "", $2); print $2}')
+# Source the messages.sh script (ensure it's in the same directory)
+source ./messages.sh
 
 display_elf_header_info
